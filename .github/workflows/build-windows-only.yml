@@ -55,9 +55,10 @@ jobs:
 
       - name: Install vcpkg dependencies
         run: |
-          C:\vcpkg\vcpkg install libvpx:x64-windows-static libyuv:x64-windows-static opus:x64-windows-static aom:x64-windows-static
+          C:\vcpkg\vcpkg install --triplet x64-windows-static --x-install-root C:\vcpkg\installed
         env:
           VCPKG_DEFAULT_TRIPLET: x64-windows-static
+          VCPKG_ROOT: C:\vcpkg
 
       - name: Build Rust
         run: cargo build --release
