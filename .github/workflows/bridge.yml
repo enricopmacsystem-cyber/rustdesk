@@ -4,6 +4,7 @@ name: Build flutter-rust-bridge
 
 on:
   workflow_call:
+  workflow_dispatch:
 
 env:
   CARGO_EXPAND_VERSION: "1.0.95"
