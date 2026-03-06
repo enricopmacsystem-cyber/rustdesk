@@ -55,7 +55,7 @@ jobs:
 
       - name: Install vcpkg dependencies
         run: |
-          C:\vcpkg\vcpkg install --triplet x64-windows-static --x-install-root C:\vcpkg\installed
+          C:\vcpkg\vcpkg install --classic --triplet x64-windows-static libvpx libyuv opus aom
         env:
           VCPKG_DEFAULT_TRIPLET: x64-windows-static
           VCPKG_ROOT: C:\vcpkg
