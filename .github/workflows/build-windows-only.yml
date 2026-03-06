@@ -3,11 +3,22 @@ name: Build Windows Only
 on:
   workflow_dispatch:
 
+env:
+  RUST_VERSION: "1.75"
+  LLVM_VERSION: "15.0.6"
+  FLUTTER_VERSION: "3.24.5"
+  VCPKG_COMMIT_ID: "120deac3062162151622ca4860575a33844ba10b"
+
 jobs:
+  generate-bridge:
+    uses: ./.github/workflows/bridge.yml
+
   build-windows:
+    needs: generate-bridge
     runs-on: windows-2022
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 
@@ -16,9 +27,53 @@ jobs:
         with:
           name: bridge-artifact
           path: ./
-        continue-on-error: true
 
-      - uses: ./.github/workflows/flutter-build.yml
+      - name: Install LLVM
+        uses: KyleMayes/install-llvm-action@v1
         with:
-          upload-artifact: true
-          upload-tag: "manual"
+          version: ${{ env.LLVM_VERSION }}
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2.12.0
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          targets: x86_64-pc-windows-msvc
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgDirectory: C:\vcpkg
+          vcpkgGitCommitId: ${{ env.VCPKG_COMMIT_ID }}
+
+      - name: Install vcpkg dependencies
+        run: |
+          C:\vcpkg\vcpkg install libvpx:x64-windows-static libyuv:x64-windows-static opus:x64-windows-static aom:x64-windows-static
+        env:
+          VCPKG_DEFAULT_TRIPLET: x64-windows-static
+
+      - name: Build Rust
+        run: cargo build --release
+        env:
+          VCPKG_ROOT: C:\vcpkg
+
+      - name: Flutter pub get
+        run: flutter pub get
+        working-directory: flutter
+
+      - name: Build Flutter Windows
+        run: flutter build windows --release
+        working-directory: flutter
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rustdesk-windows-x86_64
+          path: flutter/build/windows/x64/runner/Release/
