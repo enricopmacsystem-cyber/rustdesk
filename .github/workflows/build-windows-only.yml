@@ -80,9 +80,9 @@ jobs:
 
       - name: Install NSIS
         run: |
-          iwr -useb get.scoop.sh -outfile 'install.ps1'
-          .\install.ps1 -RunAsAdmin
-          scoop install nsis
+          Invoke-WebRequest -Uri "https://sourceforge.net/projects/nsis/files/NSIS%203/3.09/nsis-3.09-setup.exe/download" -OutFile "$env:TEMP\nsis-setup.exe" -UserAgent "wget"
+          Start-Process -Wait "$env:TEMP\nsis-setup.exe" -ArgumentList '/S'
+          echo "C:\Program Files (x86)\NSIS" >> $env:GITHUB_PATH
 
       - name: Build installer
         run: |
