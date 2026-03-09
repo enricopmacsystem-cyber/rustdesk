@@ -86,9 +86,8 @@ jobs:
 
       - name: Build installer
         run: |
-          dir res\*.nsi
           $nsiFile = Get-ChildItem res\*.nsi | Select-Object -First 1
-          makensis /DVERSION=${{ env.VERSION }} $nsiFile.FullName
+          makensis /DVERSION=${{ env.VERSION }} /DBUILD_DIR="$pwd\flutter\build\windows\x64\runner\Release" $nsiFile.FullName
           
       - name: Upload installer
         uses: actions/upload-artifact@v4
