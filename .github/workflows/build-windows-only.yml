@@ -8,6 +8,7 @@ env:
   LLVM_VERSION: "15.0.6"
   FLUTTER_VERSION: "3.24.5"
   VCPKG_COMMIT_ID: "120deac3062162151622ca4860575a33844ba10b"
+  VERSION: "1.4.6"
 
 jobs:
   generate-bridge:
@@ -73,27 +74,22 @@ jobs:
         run: flutter build windows --release
         working-directory: flutter
 
+      - name: Copy librustdesk.dll
+        run: |
+          copy target\release\librustdesk.dll flutter\build\windows\x64\runner\Release\
+
+      - name: Install NSIS
+        run: |
+          iwr -useb get.scoop.sh -outfile 'install.ps1'
+          .\install.ps1 -RunAsAdmin
+          scoop install nsis
+
       - name: Build installer
         run: |
-          cargo build --release --bin rustdesk
-          mv target/release/rustdesk.exe flutter/build/windows/x64/runner/Release/
-        env:
-          VCPKG_ROOT: C:\vcpkg
+          makensis /DVERSION=${{ env.VERSION }} res\setup.nsi
 
-      - name: Download and install NSIS
-        run: |
-          Invoke-WebRequest -Uri "https://sourceforge.net/projects/nsis/files/NSIS%203/3.09/nsis-3.09-setup.exe/download" -OutFile nsis-setup.exe
-          Start-Process -Wait nsis-setup.exe -ArgumentList '/S'
-
-      - name: Build NSIS installer
-        run: |
-          cp res/mac-system-remote.nsi res/setup.nsi 2>$null || true
-          makensis res/setup.nsi
-
-      - name: Upload artifact
+      - name: Upload installer
         uses: actions/upload-artifact@v4
         with:
-          name: rustdesk-windows-x86_64
-          path: |
-            flutter/build/windows/x64/runner/Release/
-            *.exe
+          name: rustdesk-${{ env.VERSION }}-windows-installer
+          path: rustdesk-*.exe
